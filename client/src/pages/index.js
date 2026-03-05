@@ -10,6 +10,7 @@ import ContextPanel from '../components/ContextPanel';
 import QuickFilters from '../components/QuickFilters';
 import HelpOverlay from '../components/HelpOverlay';
 import { PromoteModal, RollbackModal, FreezeModal } from '../components/Modals';
+import AddAppModal from '../components/AddAppModal';
 
 const ENVS = ['', 'staging', 'production'];
 
@@ -47,6 +48,7 @@ export default function Home() {
       if (e.key === 'p') dispatch(openModal('promote'));
       if (e.key === 'r') dispatch(openModal('rollback'));
       if (e.key === 'f') dispatch(openModal('freeze'));
+      if (e.key === 'a') dispatch(openModal('register'));
       if (e.key === 'e') {
         const idx = ENVS.indexOf(selectedEnv);
         dispatch(setSelectedEnv(ENVS[(idx + 1) % ENVS.length]));
@@ -95,6 +97,7 @@ export default function Home() {
           <span className="shortcut"><span className="key-hint">p</span>romote</span>
           <span className="shortcut"><span className="key-hint">r</span>ollback</span>
           <span className="shortcut"><span className="key-hint">f</span>reeze</span>
+          <span className="shortcut"><span className="key-hint">a</span>dd app</span>
           <span className="shortcut"><span className="key-hint">x</span>commands</span>
           <span className="shortcut"><span className="key-hint">/</span>search</span>
           <span className="shortcut"><span className="key-hint">e</span>nv</span>
@@ -105,6 +108,7 @@ export default function Home() {
         {activeModal === 'promote' && <PromoteModal />}
         {activeModal === 'rollback' && <RollbackModal />}
         {activeModal === 'freeze' && <FreezeModal />}
+        {activeModal === 'register' && <AddAppModal />}
         <HelpOverlay />
       </div>
     </>

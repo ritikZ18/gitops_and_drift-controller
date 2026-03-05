@@ -17,6 +17,13 @@ type Store struct {
 	events   map[string][]models.ClusterEvent // keyed by appID
 }
 
+// AddApp adds a new application to the store
+func (s *Store) AddApp(app models.App) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.apps[app.ID] = &app
+}
+
 // New creates a store seeded with realistic demo data
 func New() *Store {
 	s := &Store{

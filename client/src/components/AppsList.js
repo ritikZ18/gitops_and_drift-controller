@@ -11,11 +11,21 @@ export default function AppsList() {
     const searchRef = useRef(null);
     const listRef = useRef(null);
 
-    useEffect(() => {
-        if (filteredApps.length > 0 && focusIdx >= 0 && focusIdx < filteredApps.length) {
-            dispatch(setSelectedApp(filteredApps[focusIdx].id));
+    // Group apps by ID
+    const groupedApps = filteredApps.reduce((acc, app) => {
+        if (!acc[app.id]) {
+            acc[app.id] = { ...app, envs: [] };
         }
-    }, [focusIdx, filteredApps, dispatch]);
+        acc[app.id].envs.push(app);
+        return acc;
+    }, {});
+    const appsToRender = Object.values(groupedApps);
+
+    useEffect(() => {
+        if (appsToRender.length > 0 && focusIdx >= 0 && focusIdx < appsToRender.length) {
+            dispatch(setSelectedApp(appsToRender[focusIdx].id));
+        }
+    }, [focusIdx, appsToRender, dispatch]);
 
     useEffect(() => {
         const handler = (e) => {
@@ -32,23 +42,23 @@ export default function AppsList() {
             if (!isSearching) {
                 if (e.key === 'j' || e.key === 'ArrowDown') {
                     e.preventDefault();
-                    setFocusIdx(i => Math.min(i + 1, filteredApps.length - 1));
+                    setFocusIdx(i => Math.min(i + 1, appsToRender.length - 1));
                 }
                 if (e.key === 'k' || e.key === 'ArrowUp') {
                     e.preventDefault();
                     setFocusIdx(i => Math.max(i - 1, 0));
                 }
                 if (e.key === 'g') setFocusIdx(0);
-                if (e.key === 'G') setFocusIdx(filteredApps.length - 1);
+                if (e.key === 'G') setFocusIdx(appsToRender.length - 1);
                 if (e.key === '*') {
-                    const app = filteredApps[focusIdx];
+                    const app = appsToRender[focusIdx];
                     if (app) dispatch(togglePin(app.id));
                 }
             }
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
-    }, [isSearching, filteredApps.length, dispatch]);
+    }, [isSearching, appsToRender.length, focusIdx, dispatch]);
 
     useEffect(() => {
         if (listRef.current) {
@@ -61,7 +71,7 @@ export default function AppsList() {
         <div className="pane pane-apps">
             <div className="pane-header">
                 <span className="pane-title">APPS</span>
-                <span className="pane-badge">{filteredApps.length}</span>
+                <span className="pane-badge">{appsToRender.length}</span>
             </div>
             <div className="search-bar">
                 {isSearching ? (
@@ -85,9 +95,9 @@ export default function AppsList() {
             </div>
             <div className="apps-list" ref={listRef}>
                 {loading && <div className="loading-indicator">loading...</div>}
-                {filteredApps.map((app, idx) => (
+                {appsToRender.map((app, idx) => (
                     <div
-                        key={`${app.id}-${app.environment}`}
+                        key={app.id}
                         className={`app-row ${idx === focusIdx ? 'active' : ''} ${app.id === selectedAppId ? 'selected' : ''}`}
                         onClick={() => { setFocusIdx(idx); dispatch(setSelectedApp(app.id)); }}
                     >
@@ -95,16 +105,20 @@ export default function AppsList() {
                             <span className="app-cursor">{idx === focusIdx ? '▸' : ' '}</span>
                             <span className="app-name">{app.name}</span>
                             {pinnedAppIds.includes(app.id) && <span style={{ color: 'var(--yellow)', marginLeft: '4px' }}>★</span>}
-                            {app.frozen && <span className="frozen-badge">❄</span>}
+                            {app.frozen && <span className="frozen-badge" style={{ marginLeft: 'auto' }}>❄</span>}
                         </div>
-                        <div className="app-row-meta">
-                            <span className="env-tag">{app.environment}</span>
-                            <StatusChip type="sync" value={app.syncStatus} />
-                            <StatusChip type="health" value={app.healthStatus} />
+                        <div className="app-envs-grid">
+                            {app.envs.map(env => (
+                                <div key={env.environment} className="env-row-summary">
+                                    <span className="env-tag-mini">{env.environment[0]}</span>
+                                    <StatusChip type="sync" value={env.syncStatus} />
+                                    <StatusChip type="health" value={env.healthStatus} />
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
-                {!loading && filteredApps.length === 0 && (
+                {!loading && appsToRender.length === 0 && (
                     <div className="empty-state">no apps match filters</div>
                 )}
             </div>

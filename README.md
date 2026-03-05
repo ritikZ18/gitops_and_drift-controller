@@ -40,12 +40,18 @@ A platform-grade internal tool for managing OpenShift releases using GitOps prac
 
 ### Local Development
 
-```bash
-# Terminal 1: API server
-cd server && go run ./cmd/server
+The lifecycle script `start.sh` manages both services:
 
-# Terminal 2: Frontend dev server
-cd client && npm install && npm run dev
+```bash
+# Start both services in debug mode (real-time reload)
+./start.sh --debug
+
+# Stop all running services
+./start.sh --stop
+
+# Start specific services
+./start.sh --backend
+./start.sh --frontend
 ```
 
 ### Docker

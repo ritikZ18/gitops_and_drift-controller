@@ -29,6 +29,7 @@ func NewHandlers(s *store.Store) *Handlers {
 func (h *Handlers) RegisterRoutes(r *mux.Router) {
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/apps", h.ListApps).Methods("GET")
+	api.HandleFunc("/apps", h.CreateApp).Methods("POST")
 	api.HandleFunc("/apps/{id}", h.GetApp).Methods("GET")
 	api.HandleFunc("/apps/{id}/drift", h.GetDrift).Methods("GET")
 	api.HandleFunc("/apps/{id}/events", h.GetEvents).Methods("GET")
@@ -417,4 +418,104 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 
 func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]string{"error": message})
+}
+
+// CreateApp registers a new application
+func (h *Handlers) CreateApp(w http.ResponseWriter, r *http.Request) {
+	var req models.CreateAppRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Name == "" || req.RepoURL == "" {
+		respondError(w, http.StatusBadRequest, "name and repoUrl are required")
+		return
+	}
+
+	appID := "app-" + uuid.New().String()[:8]
+	now := time.Now()
+
+	newApp := models.App{
+		ID:        appID,
+		Name:      req.Name,
+		RepoURL:   req.RepoURL,
+		Path:      req.ManifestsPath,
+		Owners:    []string{req.Owner},
+		CreatedAt: now,
+		Environments: []models.Environment{
+			{
+				Name:            "staging",
+				Namespace:       req.Name + "-staging",
+				ClusterContext:  "prod-us1",
+				DesiredRevision: req.DefaultBranch,
+				LiveRevision:    "initial",
+				SyncStatus:      models.SyncStatusOutOfSync,
+				HealthStatus:    models.HealthStatusUnknown,
+				DriftSeverity:   models.DriftSeverityNone,
+				DriftCount:      0,
+				LastSyncTime:    now,
+			},
+			{
+				Name:            "production",
+				Namespace:       req.Name + "-prod",
+				ClusterContext:  "prod-us1",
+				DesiredRevision: req.DefaultBranch,
+				LiveRevision:    "initial",
+				SyncStatus:      models.SyncStatusOutOfSync,
+				HealthStatus:    models.HealthStatusUnknown,
+				DriftSeverity:   models.DriftSeverityNone,
+				DriftCount:      0,
+				LastSyncTime:    now,
+			},
+		},
+	}
+
+	if newApp.Path == "" {
+		newApp.Path = "k8s/"
+	}
+	if req.Owner == "" {
+		newApp.Owners = []string{"platform-team"}
+	}
+	if req.DefaultBranch == "" {
+		newApp.Environments[0].DesiredRevision = "main"
+		newApp.Environments[1].DesiredRevision = "main"
+	}
+
+	h.Store.AddApp(newApp)
+
+	if req.FetchHistory {
+		// Seed some mock history for the new app
+		mockReleases := []models.ReleaseRecord{
+			{ID: uuid.New().String(), AppID: appID, AppName: req.Name, Env: "staging", Revision: "f00b001", PrevRevision: "f00b000", Action: "sync", Status: "success", Actor: req.Owner, Timestamp: now.Add(-24 * time.Hour), Message: "Initial production baseline"},
+			{ID: uuid.New().String(), AppID: appID, AppName: req.Name, Env: "staging", Revision: "f00b002", PrevRevision: "f00b001", Action: "sync", Status: "success", Actor: req.Owner, Timestamp: now.Add(-12 * time.Hour), Message: "Update manifests for resource limits"},
+			{ID: uuid.New().String(), AppID: appID, AppName: req.Name, Env: "staging", Revision: "f00b003", PrevRevision: "f00b002", Action: "sync", Status: "success", Actor: req.Owner, Timestamp: now.Add(-1 * time.Hour), Message: "Add health check probes"},
+		}
+		for _, r := range mockReleases {
+			h.Store.AddRelease(r)
+		}
+
+		// Seed some mock events
+		mockEvents := []models.ClusterEvent{
+			{Type: "Normal", Reason: "Created", Message: "Created pod group", Object: "Deployment/" + req.Name, Timestamp: now.Add(-1 * time.Hour)},
+			{Type: "Normal", Reason: "ScalingReplicaSet", Message: "Scaled up replica set", Object: "ReplicaSet/" + req.Name + "-5f7d", Timestamp: now.Add(-55 * time.Minute)},
+		}
+		for _, e := range mockEvents {
+			h.Store.AddEvent(appID, e)
+		}
+	}
+
+	h.Store.AddAudit(models.AuditEntry{
+		RequestID: uuid.New().String(),
+		Actor:     req.Owner,
+		Action:    "create_app",
+		AppID:     appID,
+		AppName:   req.Name,
+		Payload:   req,
+		Result:    "success",
+		Message:   fmt.Sprintf("Registered new app: %s", req.Name),
+		Timestamp: now,
+	})
+
+	respondJSON(w, http.StatusCreated, newApp)
 }

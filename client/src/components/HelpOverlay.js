@@ -48,6 +48,7 @@ export default function HelpOverlay() {
                         <div className="help-row"><span className="key-hint">p</span> promote / sync</div>
                         <div className="help-row"><span className="key-hint">r</span> rollback</div>
                         <div className="help-row"><span className="key-hint">f</span> freeze / unfreeze</div>
+                        <div className="help-row"><span className="key-hint">a</span> register new app</div>
                     </div>
                     <div className="help-section">
                         <div className="help-title">GitHub Links</div>

@@ -58,3 +58,9 @@ export async function freezeApp(id, payload) {
         body: JSON.stringify(payload),
     });
 }
+export async function registerApp(payload) {
+    return fetchJSON(`/api/apps`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}

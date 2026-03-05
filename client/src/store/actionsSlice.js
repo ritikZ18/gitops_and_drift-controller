@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const actionsSlice = createSlice({
     name: 'actions',
     initialState: {
-        activeModal: null, // 'promote' | 'rollback' | 'freeze' | null
+        activeModal: null, // 'promote' | 'rollback' | 'freeze' | 'register' | null
         loading: false,
         result: null,
         error: null,

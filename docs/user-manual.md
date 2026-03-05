@@ -11,6 +11,15 @@ A platform-grade internal tool for managing OpenShift releases using GitOps prac
 - **Rollout Health** — Real-time rollout status and failure diagnostics
 - **Audit Trail** — Complete log of who did what and when
 
+### Lifecycle Management
+
+Use the `start.sh` script in the root directory to manage the application services:
+
+- **Start all (Debug)**: `./start.sh --debug` (Recommended for development)
+- **Start all (Prod)**: `./start.sh --all` (Builds and starts production versions)
+- **Stop all**: `./start.sh --stop` (Identifies and kills processes on ports 8080/3000)
+- **Restart**: `./start.sh --stop && ./start.sh --debug`
+
 ### Navigating the Interface
 
 The interface uses a **3-pane terminal layout**:
@@ -62,6 +71,7 @@ The interface uses a **3-pane terminal layout**:
 | `p` | Open Promote modal |
 | `r` | Open Rollback modal |
 | `f` | Open Freeze/Unfreeze modal |
+| `a` | Open Register App modal |
 | `y` | Confirm action |
 | `n` | Cancel action |
 

@@ -152,6 +152,16 @@ type FreezeRequest struct {
 	Actor       string `json:"actor,omitempty"`
 }
 
+// CreateAppRequest is the payload for registering a new app
+type CreateAppRequest struct {
+	Name          string `json:"name"`
+	RepoURL       string `json:"repoUrl"`
+	DefaultBranch string `json:"defaultBranch"`
+	ManifestsPath string `json:"manifestsPath"`
+	Owner         string `json:"owner"`
+	FetchHistory  bool   `json:"fetchHistory"`
+}
+
 // ClusterEvent represents a cluster event
 type ClusterEvent struct {
 	Type      string    `json:"type"` // Normal, Warning

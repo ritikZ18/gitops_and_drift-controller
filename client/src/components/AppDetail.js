@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { openModal } from '../store/actionsSlice';
 import StatusChip from './StatusChip';
 
 function timeAgo(dateStr) {
@@ -93,11 +94,15 @@ export default function AppDetail() {
                 </div>
                 <div className="detail-row">
                     <span className="detail-label">repo:</span>
-                    <span className="detail-value dim mono">{app.repoUrl} <span className="key-hint">G</span></span>
+                    <span className="detail-value dim mono clickable" onClick={() => window.open(links.repo, '_blank')}>
+                        {app.repoUrl} <span className="key-hint">G</span> <span className="link-icon">↗</span>
+                    </span>
                 </div>
                 <div className="detail-row">
                     <span className="detail-label">path:</span>
-                    <span className="detail-value dim mono">{app.path || app.manifestsPath} <span className="key-hint">P</span></span>
+                    <span className="detail-value dim mono clickable" onClick={() => window.open(links.path, '_blank')}>
+                        {app.path || app.manifestsPath} <span className="key-hint">P</span> <span className="link-icon">↗</span>
+                    </span>
                 </div>
                 <div className="detail-row">
                     <span className="detail-label">owners:</span>
@@ -114,21 +119,21 @@ export default function AppDetail() {
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">desired:</span>
-                            <span className="detail-value mono">
-                                {env.desiredRevision} <span className="dim">({app.defaultBranch || 'main'})</span> <span className="key-hint">D</span>
+                            <span className="detail-value mono clickable" onClick={() => window.open(links.desired, '_blank')}>
+                                {env.desiredRevision} <span className="dim">({app.defaultBranch || 'main'})</span> <span className="key-hint">D</span> <span className="link-icon">↗</span>
                             </span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">live:</span>
-                            <span className="detail-value mono">
-                                {env.liveRevision} {env.liveRevision && <span className="key-hint">L</span>}
+                            <span className="detail-value mono clickable" onClick={() => env.liveRevision && window.open(links.live, '_blank')}>
+                                {env.liveRevision} {env.liveRevision && <><span className="key-hint">L</span> <span className="link-icon">↗</span></>}
                             </span>
                         </div>
                         {links.compare && (
                             <div className="detail-row">
                                 <span className="detail-label">compare:</span>
-                                <span className="detail-value mono dim">
-                                    {env.liveRevision}..{env.desiredRevision} <span className="key-hint">C</span>
+                                <span className="detail-value mono dim clickable" onClick={() => window.open(links.compare, '_blank')}>
+                                    {env.liveRevision}..{env.desiredRevision} <span className="key-hint">C</span> <span className="link-icon">↗</span>
                                 </span>
                             </div>
                         )}
@@ -160,17 +165,26 @@ export default function AppDetail() {
 
                 <div className="detail-divider" />
 
-                <div className="action-hints">
-                    <div className="hint-group">
+                <div className="detail-actions">
+                    <button className="btn-action" onClick={() => dispatch(openModal('promote'))}>
                         <span className="key-hint">p</span> Promote
+                    </button>
+                    <button className="btn-action" onClick={() => dispatch(openModal('rollback'))}>
                         <span className="key-hint">r</span> Rollback
+                    </button>
+                    <button className="btn-action" onClick={() => dispatch(openModal('freeze'))}>
                         <span className="key-hint">f</span> Freeze
-                    </div>
-                    <div className="hint-group" style={{ marginTop: '4px' }}>
+                    </button>
+                    <button className="btn-action" onClick={() => {
+                        if (links.compare || links.repo) {
+                            navigator.clipboard.writeText(links.compare || links.repo);
+                        }
+                    }}>
                         <span className="key-hint">y</span> Copy Link
-                    </div>
+                    </button>
                 </div>
             </div>
         </div>
     );
 }
+
