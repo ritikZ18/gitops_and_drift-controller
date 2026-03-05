@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+.next/
+out/
+server/gitops-controller
+*.exe
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.test
+coverage.out
+*.prof
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+npm-debug.log*

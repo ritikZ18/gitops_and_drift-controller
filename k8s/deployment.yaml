@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-controller
+  namespace: gitops-system
+  labels:
+    app: gitops-controller
+    app.kubernetes.io/name: gitops-controller
+    app.kubernetes.io/component: server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gitops-controller
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: gitops-controller
+    spec:
+      serviceAccountName: gitops-controller
+      containers:
+        - name: gitops-controller
+          image: registry.acme.io/gitops-controller:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: STATIC_DIR
+              value: "./static"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitops-controller
+  namespace: gitops-system
+  labels:
+    app: gitops-controller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: gitops-controller
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gitops-controller
+  namespace: gitops-system
+  labels:
+    app: gitops-controller
+spec:
+  to:
+    kind: Service
+    name: gitops-controller
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitops-controller-config
+  namespace: gitops-system
+  labels:
+    app: gitops-controller
+data:
+  PORT: "8080"
+  LOG_LEVEL: "info"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitops-controller
+  namespace: gitops-system
+  labels:
+    app: gitops-controller
