@@ -1,6 +1,6 @@
 # GitOps Release & Drift Controller
 
-A platform-grade internal tool for managing OpenShift releases using GitOps practices. Built with **Go** (REST API) + **Next.js/React/Redux** (terminalistic web UI).
+A platform-grade internal tool for managing OpenShift releases using GitOps practices. Built with **Go** (REST API) + **Next.js/Redux** (terminalistic web UI).
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
